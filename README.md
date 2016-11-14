@@ -42,8 +42,8 @@ git log
 
 
 ## TODOs
--Add Proxy Support
--Create a requirements.txt for more automatic installation
+* Add Proxy Support
+* Create a requirements.txt for more automatic installation
 
 ## License and Authorship
 
