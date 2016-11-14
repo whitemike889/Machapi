@@ -1,0 +1,33 @@
+{
+    "Credentials": {
+        "Username": "Fernand", 
+        "Password": "Mondego"
+    }, 
+    "SearchCriteria": {
+        "body": "", 
+        "profession_id": "", 
+        "smarts": "", 
+        "haschildren": "", 
+        "height": "", 
+        "city": "90210", 
+        "maritalstatus": "", 
+        "wantchildren": "", 
+        "seekinga": "f", 
+        "maxage": "45", 
+        "relationshipage_id": "", 
+        "religion": "", 
+        "pets": "", 
+        "income": "", 
+        "haircolor": "", 
+        "heightb": "", 
+        "interests": "", 
+        "drugs": "", 
+        "eyes_id": "", 
+        "drink": "", 
+        "iama": "m", 
+        "minage": "18", 
+        "country": "1", 
+        "miles": "25", 
+        "smoke": ""
+    }
+}
