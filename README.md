@@ -15,16 +15,18 @@ something, and safely manages its own state for any features that are stateful.
 
 ```
 git clone https://github.com/cmpunches/Pofapi.git
+cd Pofapi/
 pip install -r requirements.txt
 ```
 
 ## Usage
+After placing the ./pofapi directory in your project, import the POFSession object: 
 
 ```
 from pofapi import POFSession
 ```
 
-And you're there.
+And you're ready to go.
 
 ## Contributing
 
@@ -32,7 +34,7 @@ And you're there.
 2. Create your feature branch: `git checkout -b my-new-feature`
 3. Commit your changes: `git commit -am 'Add some feature'`
 4. Push to the branch: `git push origin my-new-feature`
-5. Submit a pull request :D
+5. Submit a pull request.
 
 ## History
 
