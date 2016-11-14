@@ -5,7 +5,7 @@ TODO:
 Add proxy support.
 
 This was created after I came across a thread from the POF.com owners saying they won't be
-creating a server-side API, which hinders mobile application development.
+creating a server-side API, which hinders 3rd party software development.
 
 Hope it helps some dev somewhere get something neat built.
 
