@@ -15,6 +15,7 @@ something, and safely manages its own state for any features that are stateful.
 
 ```
 git clone https://github.com/cmpunches/Pofapi.git
+pip install -r requirements.txt
 ```
 
 ## Usage
