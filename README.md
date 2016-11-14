@@ -1,6 +1,14 @@
 # Pofapi
+## A fully functional python API library for POF.com
 
-TODO: Add proxy support.
+TODO: 
+Add proxy support.
+
+This was created after I came across a thread from the POF.com owners saying they won't be
+creating a server-side API, which hinders mobile application development.
+
+Hope it helps some dev somewhere get something neat built.
+
 
 ## Installation
 
@@ -10,7 +18,11 @@ TODO: create a requirements.txt
 
 ## Usage
 
-TODO: Write usage instructions
+Created a POFSession object.
+
+Most features require you to login with the object, but it's will tell you what you need to do and
+safely manages its state.  Failure robust applications should be able to be build with it and I will actively
+maintain the library for the time being.
 
 ## Contributing
 
