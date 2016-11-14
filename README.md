@@ -7,7 +7,9 @@ Add proxy support.
 This was created after I came across a thread from the POF.com owners saying they won't be
 creating a server-side API, which hinders 3rd party software development.
 
-Hope it helps some dev somewhere get something neat built.
+Hope it helps some developer somewhere get something neat built.
+
+It's pretty easy to use.  Just create a new POFSession object and it's methods drive everything.
 
 
 ## Installation
@@ -18,11 +20,10 @@ TODO: create a requirements.txt
 
 ## Usage
 
-Created a POFSession object.
+Create a POFSession object.  This is a really simple set of classes.
 
-Most features require you to login with the object, but it's will tell you what you need to do and
-safely manages its state.  Failure robust applications should be able to be build with it and I will actively
-maintain the library for the time being.
+Most features require you to login with the object, but it will tell you what you need to do and
+safely manage its own state for stateful features. 
 
 ## Contributing
 
@@ -34,7 +35,7 @@ maintain the library for the time being.
 
 ## History
 
-TODO: $(git log)
+$(git log)
 
 ## License and Authorship
 
