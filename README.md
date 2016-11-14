@@ -9,7 +9,7 @@ creating a server-side API, which hinders 3rd party software development.
 
 Hope it helps some developer somewhere get something neat built.
 
-It's pretty easy to use.  Just create a new POFSession object and it's methods drive everything.
+It's pretty easy to use.  Just create a new POFSession object and its methods drive everything.
 
 
 ## Installation
