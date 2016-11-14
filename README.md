@@ -13,7 +13,9 @@ something, and safely manages its own state for any features that are stateful.
 
 ## Installation
 
+```
 git clone https://github.com/cmpunches/Pofapi.git
+```
 
 ## Usage
 
@@ -33,8 +35,10 @@ And you're there.
 
 ## History
 
-$(git log)
-
+Run the following after cloning the repo command in the Installation section:
+```
+git log
+```
 
 
 ## TODOs
