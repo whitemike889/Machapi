@@ -1,8 +1,8 @@
 # Pofapi
 ## A fully functional python API library for POF.com
 
-This was created after I came across a thread from the POF.com owners saying they won't be
-creating a server-side API, which hinders 3rd party software development.
+This was created after I came across a thread from the POF.com owners saying they won't be creating a 
+server-side API, which hinders 3rd party software development.
 
 Hope it helps some developer somewhere get something neat built.
 
@@ -24,6 +24,7 @@ After placing the ./pofapi directory in your project, import the POFSession obje
 
 ```
 from pofapi import POFSession
+POFobject = POFSession()
 ```
 
 And you're ready to go.
@@ -43,13 +44,25 @@ Run the following after cloning the repo command in the Installation section:
 git log
 ```
 
+## Future of this Library
+
+This library is being used as an example use case for all of the additional considerations that go into the
+creation of a python library so that other work will be more polished and consumable, and so that other work
+that I create will have a higher likelihood of inclusion into other projects.
 
 ## TODOs
 * Add Proxy Support
-* Create a requirements.txt for more automatic installation
+* Package as a python wheel or add a setup.py
+* Add doxygen documentation generation
+* Add unit tests
 
 ## License and Authorship
 
 By Chris Punches and owned by same, starting in 2016.  
+
 Released under Apache license with all rights reserved.  See the license file for more details.
 
+# POF Legal
+The site POF.com is the property of its respective provider or its licensor and is protected by applicable 
+copyright law as set forth below.  I make no claims of ownership of their content or services.  This is only
+an interaction API for use on their site.
