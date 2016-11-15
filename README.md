@@ -66,5 +66,7 @@ You may create derivative works provided that your work references the original 
 
 # POF Legal
 The site POF.com is the property of its respective provider or its licensor and is protected by applicable 
-copyright law as set forth below.  I make no claims of ownership of their content or services.  This is only
-an interaction API for use on their site.
+copyright law, and their terms of service are located [here](http://www.pof.com/terms.aspx), which you must agree to when using this library.
+
+I make no claims of ownership of their content or services.  This is only an interaction API for use on their 
+site.
