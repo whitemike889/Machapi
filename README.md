@@ -62,6 +62,8 @@ By Chris Punches and owned by same, starting in 2016.
 
 Released under Apache license with all rights reserved.  See the license file for more details.
 
+You may create derivative works provided that your work references the original author and project.
+
 # POF Legal
 The site POF.com is the property of its respective provider or its licensor and is protected by applicable 
 copyright law as set forth below.  I make no claims of ownership of their content or services.  This is only
