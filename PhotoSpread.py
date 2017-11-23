@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pofapi.POFSession import POFSession
 from yattag import Doc, indent
 from lxml import html
