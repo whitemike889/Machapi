@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pofapi.POFSession import POFSession
 
 # not POFSession Library
