@@ -16,15 +16,22 @@ something, and safely manages its own state for any features that are stateful.
 ```
 git clone https://github.com/cmpunches/Pofapi.git
 cd Pofapi/
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ## Usage
 After placing the ./pofapi directory in your project, import the POFSession object: 
 
 ```
-from pofapi import POFSession
-POFobject = POFSession()
+from pofapi.POFSession import POFSession
+
+# Create a configuration object from a file.
+config = POFSession.Config( config_file_path )
+
+POFobject = POFSession( config )
+
+# start the session by loggin in.
+POFobject.login( config.username, config.password )
 ```
 
 And you're ready to go.
