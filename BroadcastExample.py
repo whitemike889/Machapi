@@ -1,72 +1,18 @@
-#!/usr/bin/python
-import json
+from pofapi.POFSession import POFSession
 
-from pofapi import POFSession
-
+# not POFSession Library
 def Main():
-    config = {}
+    config = POFSession.Config("/home/phanes/PycharmProjects/bettertittyscraper/config.ini")
 
-    with open('config.json', 'r') as f:
-        config = json.load(f)
+    testSession = POFSession(config)
+    testSession.login(config.username, config.password)
 
-    Session = POFSession.POFSession()
-    Session.Criteria = config["SearchCriteria"]
+    users = testSession.searchUsers(config, 5, online_only=True)
 
-    Session.login(config["Credentials"]["Username"], config["Credentials"]["Password"])
+    print("Total Users Found: {0}".format( len(users) ) )
 
-    userIDs = Session.getOnlineUsers(30, False)
-    for userID in userIDs:
-        Session.sendEmail(userID, "Hey, what's up?")
+    testSession.broadcastMessage(users, "hey whats up")
 
 
 if __name__ == '__main__':
     Main()
-
-
-# Credentials = {
-#     'Username': '***********',
-#     'Password': '***********'
-# }
-#
-# Session.Criteria = {
-#     # Your gender
-#     'iama': 'm',
-#     # Minimum Age
-#     'minage': '18',
-#     # Maximum Age
-#     'maxage': '45',
-#     # Zip Code
-#     'city': '90210',
-#     # Desired Gender
-#     'seekinga': 'f',
-#     # Search Radius from Zip Code
-#     'miles': '25',
-#     # Not implemented but required to be present.
-#     'interests': '',
-#     'country': '1',
-#     'height': '',
-#     'heightb': '',
-#     'maritalstatus': '',
-#     'relationshipage_id': '',
-#     'wantchildren': '',
-#     'smoke': '',
-#     'drugs': '',
-#     'body': '',
-#     'smarts': '',
-#     'pets': '',
-#     'eyes_id': '',
-#     'income': '',
-#     'profession_id': '',
-#     'haircolor': '',
-#     'drink': '',
-#     'religion': '',
-#     'haschildren': '',
-# }
-
-# Config = {
-#    'Credentials': Credentials,
-#    'SearchCriteria': Session.Criteria,
-# }
-
-# with open('config.json', 'w') as f:
-#    json.dump(Config, f, indent=4)

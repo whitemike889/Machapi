@@ -1,180 +1,242 @@
 import requests
-from Parser import Parser
-from Helpers import eprint
-import requests
-from furl import furl
+from lxml import html
+import re
+import configparser
 import sqlite3
 
-
-# Should be bound to POFSession class
-class UserHistory():
-    def __init__(self, username):
-        self.conn = sqlite3.connect("%s.db" % (username))
-        if self.conn is not None:
-            self.DB = self.conn.cursor()
-            self.ensureMessageHistoryTable()
-        else:
-            eprint("There was an error establishing the user history database connection.  Exiting.")
-            exit(1)
-
-    def addUserContactEvent(self, userID, message):
-        # adds a contact event to the database
-        # uses currentTime
-
-        query = """
-			INSERT INTO {tableName} VALUES(
-				NULL,
-				{user},
-				DATETIME('now', 'localtime'),
-				{previouslyContacted},
-				"{payload}"
-			);
-		""".format(
-            tableName="ContactEvents",
-            user=userID,
-            previouslyContacted=int(self.isPreviouslyContactedUser(userID)),
-            payload=message
-        )
-
-        self.DB.execute(query)
-        self.conn.commit()
-        #print("Added user to db.")
-
-    def canMakeNewContacts(self):
-        # Checks to see if 50 messages have been sent out to new users in the last 24 hours.
-        pass
-
-
-    # This returns 0|1
-    def isPreviouslyContactedUser(self, userID):
-        # checks to see if a specific user has been previously contacted
-        # critical that this works to avoid spamming people
-        query = """
-			SELECT COUNT (firstContact) from {tableName} where targetUserID={uid};
-			""".format(
-            tableName="ContactEvents",
-            uid=userID
-        )
-        r = self.DB.execute(query)
-        rowcount = r.fetchone()[0]
-        return rowcount > 0
-
-    def ensureMessageHistoryTable(self):
-        query = """
-			CREATE TABLE IF NOT EXISTS {tableName} (
-				entryID PRIMARY KEY,
-				targetUserID integer,
-				time DATETIME,
-				firstContact integer,
-				message text
-			);
-			""".format(
-            tableName="ContactEvents"
-        )
-        self.DB.execute(query)
-
-
-class InboxMessage():
-    def __init__(self, messageURL, senderName, senderphotoURL, senderProfileURL):
-        self.messageURL = "http://www.pof.com/" + messageURL[0]
-        self.senderName = senderName[0]
-        self.senderPhotoURL = senderphotoURL[0]
-        self.senderProfileURL = senderProfileURL[0]
-
-
-class TranscriptEntry():
-    def __init__(self, sender, payload):
-        self.sender = sender[0]
-        self.payload = payload[0]
-
-
 class POFSession:
-    # debugging method
-    def printAllMessages(self):
-        if not self.loggedIn:
-            eprint("You must be logged in to view your inbox, derp.")
-            exit(1)
-
-        for inMsg in self.allMessages():
-            print("\n=== New ===")
-            for entry in self.viewMessageTranscript(inMsg):
-                print(entry.sender + ":\t\t" + entry.payload)
-
-    def viewMessageTranscript(self, InMsg):
-        if not self.loggedIn:
-            eprint("You must be logged in to view your inbox, derp.")
-            exit(1)
-
-        try:
-            response = self.Session.get(InMsg.messageURL)
-        except requests.exceptions.ConnectError, e:
-            eprint("Could not load the specified message.")
-            return list()
-
-        transcript = Parser.scrape("viewMessageTranscript", response.content)
-
-        return transcript
+    # Exception type for various session errors.
+    class POFSessionError(Exception):
+        def __init__(self, value):
+            self.value = value
 
 
-    def unreadMessages(self):
-        inboxURL = "http://www.pof.com/inbox.aspx"
+    class Parser():
+        @staticmethod
+        def scrape( datapoint, text ):
+            cases = {
+                "sid": POFSession.Parser.SID_login,
+                "active_session": POFSession.Parser.is_logged_in,
+                "csrf_token": POFSession.Parser.csrf_token_login,
+                "installId": POFSession.Parser.installId_login,
+                "deviceId": POFSession.Parser.deviceId_login,
+                "deviceLocale": POFSession.Parser.deviceLocale_login,
+                "msgFormHiddenElements": POFSession.Parser.msgFormHiddenElements,
+                "profile_photos": POFSession.Parser.profile_photos,
+                "users": POFSession.Parser.search_users,
+                "uid_from_url": POFSession.Parser.uid_from_url,
+            }
+            return cases[datapoint](text)
 
-        if not self.loggedIn:
-            eprint("You must be logged in to view your inbox, derp.")
-            exit(1)
+        @staticmethod
+        def SID_login(text):
+            loginFormTree = html.fromstring( text )
+            sid_xpath = loginFormTree.xpath( '//form[@name="frmLogin"]//input[@name="sid"]' )
 
-        try:
-            response = self.Session.get(inboxURL)
-        except requests.exceptions.ConnectionError, e:
-            eprint("Could not get to inbox url: %s"%(inboxURL))
-            exit(1)
+            if len(sid_xpath) > 0:
+                sid = sid_xpath[0].value
+            else:
+                raise POFSession.POFSessionError("Failed to get session ID from login form.")
 
-        # Returns a list of inBoxMessage objects.  List is empty if None.
-        newMessages = Parser.scrape("newMessages", response.content)
+            if sid is None:
+                raise POFSession.POFSessionError("Failed to get session ID from login form.")
 
-        return newMessages
+            return sid
+
+        @staticmethod
+        def csrf_token_login(text):
+            loginFormTree = html.fromstring( text )
+            csrf_token_xpath = loginFormTree.xpath( '//form[@name="frmLogin"]//input[@name="csrf_token"]' )
+
+            if len(csrf_token_xpath) > 0:
+                csrf_token = csrf_token_xpath[0].value
+            else:
+                raise POFSession.POFSessionError("Failed to get session CSRF TOKEN from login form.")
+
+            if csrf_token is None:
+                raise POFSession.POFSessionError("Failed to get CSRF TOKEN from login form.")
+
+            return csrf_token
+
+        @staticmethod
+        def installId_login(text):
+            loginFormTree = html.fromstring( text )
+            installId_xpath = loginFormTree.xpath( '//form[@name="frmLogin"]//input[@name="installId"]' )
+
+            if len(installId_xpath) > 0:
+                installId = installId_xpath[0].value
+            else:
+                raise POFSession.POFSessionError("Failed to get installId from login form.")
+
+            if installId is None:
+                raise POFSession.POFSessionError("Failed to get installId from login form.")
+
+            return installId
+
+        @staticmethod
+        def deviceId_login(text):
+            loginFormTree = html.fromstring( text )
+            deviceId = loginFormTree.xpath( '//form[@name="frmLogin"]//input[@name="deviceId"]' )
+
+            if len(deviceId) > 0:
+                deviceId = deviceId[0].value
+            else:
+                raise POFSession.POFSessionError("Failed to get deviceId from login form.")
+
+            if deviceId is None:
+                raise POFSession.POFSessionError("Failed to get deviceId from login form.")
+
+            return deviceId
+
+        @staticmethod
+        def deviceLocale_login(text):
+            loginFormTree = html.fromstring( text )
+            deviceLocale = loginFormTree.xpath( '//form[@name="frmLogin"]//input[@name="deviceLocale"]' )
+
+            if len(deviceLocale) > 0:
+                deviceLocale = deviceLocale[0].value
+            else:
+                raise POFSession.POFSessionError("Failed to get deviceLocale from login form.")
+
+            if deviceLocale is None:
+                raise POFSession.POFSessionError("Failed to get deviceLocale from login form.")
+
+            return deviceLocale
+
+        @staticmethod
+        def is_logged_in( text ):
+            edit_profile_page = html.fromstring( text )
+            sign_in_link_xpath = edit_profile_page.xpath( '/html/body/div[1]/div[1]/div/div/span[3]/a' )
+
+            ret = False
+
+            if len(sign_in_link_xpath) > 0:
+                if sign_in_link_xpath[0].text == "Sign In":
+                    ret = False
+                else:
+                    ret = True
+
+            return ret
+
+        @staticmethod
+        def msgFormHiddenElements(m):
+            # Add error handling
+            msgFormTree = html.fromstring(m)
+
+            # Add error handling
+            hiddenElementsTree = msgFormTree.xpath('//form[@name="sendmessage"]/input[@type="hidden"]')
+
+            hiddenElements = {}
+            for entry in hiddenElementsTree:
+                hiddenElements[entry.attrib['name']] = entry.attrib['value']
+
+            return hiddenElements
+
+        @staticmethod
+        def sndMsgFailed(m):
+            return not re.search("messagesent=1", m)
+
+        @staticmethod
+        def profile_photos(m):
+            profile_tree = html.fromstring(m)
+
+            photos_xpath = profile_tree.xpath('//div[@class="image-thumb-wrap"]/a/img/@src')
+
+            photos = list()
+            for photo in photos_xpath:
+                photos.append(photo)
+
+            return photos
+
+        @staticmethod
+        def search_users(m):
+            results_page = html.fromstring( m )
+
+            # returns only the urls.  not wanted if you want a user object.
+
+            # profile_list = results_page.xpath('//div[@class="profile"]//a/@href')
+            profile_list = results_page.xpath('//div[@class="results"]')
+
+            # container for POFSession.Users objects
+            users = list()
+
+            for i, profile in enumerate(profile_list):
+
+                # we only care about url and online status right now
+                href = profile.xpath('div[@class="profile"]/a/@href')
+
+                if len(href) is not 0:
+                    href = href[0]
+                else:
+                    raise POFSession.POFSessionError("Failed to parse the results page. Cannot continue.")
+
+                online_status_string = profile.xpath('div[@class="description"]/div[@class="about"]/font/text()')
+
+                if len(online_status_string) is not 0:
+                    online_status_string = online_status_string[0]
+
+                thisUser = POFSession.User("https://www.pof.com/" + href)
+
+                if online_status_string == "Online Now":
+                    thisUser.set_online()
+
+                users.append(thisUser)
+
+            return users
+
+        @staticmethod
+        def uid_from_url(m):
+            searchobj = re.search('profile_id=(.*)', m)
+            return searchobj.group(1)
 
 
-    def allMessages(self):
-        inboxURL = "http://www.pof.com/inbox.aspx"
+    # Initializer for the POFSession class
+    def __init__(self, config):
+        self.config = config
 
-        if not self.loggedIn:
-            eprint("You must be logged in to view your inbox, derp.")
-            exit(1)
-
-        try:
-            response = self.Session.get(inboxURL)
-        except requests.exceptions.ConnectionError, e:
-            eprint("Could not get to inbox url: %s"%(inboxURL))
-            exit(1)
-
-        # Returns a list of inBoxMessage objects.  List is empty if None.
-        allMessages = Parser.scrape("allMessages", response.content)
-
-        return allMessages
+        # handle to use for getting new pages with existing POF session
+        self.client = requests.Session()
 
 
+        # spoof a generic browser
+        self.client.headers.update(
+            {
+                'Accept-Encoding': "gzip, deflate, br",
+                'Referer': "http://www.pof.com/",
+                'Content-Type': "application/x-www-form-urlencoded",
+                'User-Agent': "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"
+            }
+        )
+        self.contactTracker = POFSession.ContactRecorder(self.config)
+        self.contactTracker.ensureMessageHistoryTable()
+
+    # Log in to POF.com as if you were a browser
     def login(self, username, password):
-        # Get the sid from the front page login form.
         # Can also get this from the response Set-Cookie header as
         loginURLS = {
-            "formPage": "http://www.pof.com",
-            "processPage": "http://www.pof.com/processLogin.aspx",
+            "formPage": "https://www.pof.com/inbox.aspx",
+            "processPage": "https://www.pof.com/processLogin.aspx",
         }
 
         try:
-            response = self.Session.get(loginURLS["formPage"])
-        except requests.exceptions.ConnectionError, e:
-            eprint("Could not reach %s" % (loginURLS["formPage"]), True)
-            exit(1)
+            page_response = self.client.get(loginURLS["formPage"])
 
-        sid = Parser.scrape("sid", response.content)
-        if sid is None:
-            eprint("The site structure has changed since pofapi was written.  Exiting.")
-            exit(1)
+        except requests.exceptions.ConnectionError:
+            raise POFSession.POFSessionError("Could not reach %s" % (loginURLS["formPage"]))
 
+        # get form values
+        sid = POFSession.Parser.scrape("sid", page_response.content )
+        csrf_token = POFSession.Parser.scrape( "csrf_token", page_response.content )
+        installId = POFSession.Parser.scrape( "installId", page_response.content )
+        deviceId = POFSession.Parser.scrape( "deviceId", page_response.content )
+        deviceLocale = POFSession.Parser.scrape( "deviceLocale", page_response.content )
+
+        # This site actually checks for these unset variables :/
         loginData = {
-            # This is empty but the site still needs it.
+            'csrf_token': csrf_token,
+            'installId': installId,
+            'deviceId': deviceId,
+            'deviceLocale': deviceLocale,
             'url': '',
             'username': username,
             'password': password,
@@ -183,155 +245,252 @@ class POFSession:
             'login': '',
         }
 
-        self.Session.headers.update(
-            {
-                'Accept-Encoding': "gzip, deflate, br",
-                'Referer': "http://www.pof.com/",
-                'Content-Type': "application/x-www-form-urlencoded",
-                'User-Agent': "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"
-            }
-        )
+        try:
+            login = self.client.post(loginURLS["processPage"], data=loginData, allow_redirects=True)
+        except requests.exceptions.ConnectionError:
+            raise POFSession.POFSessionError("Failed to complete login transaction at the HTTP level.  Can not continue.")
+
+
+        # throw exception if no active session created
+        if not self.has_active_session():
+            raise POFSession.POFSessionError("Login failed.  Please check your password.")
+
+        print("Successfully logged in as user '{0}'.".format(username))
+
+    def sendMessage(self, user, body):
+
+        messageGateway = "https://www.pof.com/sendmessage.aspx"
+        profileURL = "https://www.pof.com/viewprofile.aspx?profile_id=" + user.uid
 
         try:
-            login = self.Session.post(loginURLS["processPage"], data=loginData, allow_redirects=True)
-        except requests.exceptions.ConnectionError, e:
-            eprint("Failed to log in.  Exiting.")
-            exit(1)
+            profileForm = self.client.get(profileURL)
+        except requests.exceptions.ConnectionError:
+            raise POFSession.POFSessionError("Could not retrieve user profile.  Something's really wrong.")
 
-        if Parser.scrape("isLoginError", login.url):
-            print("Failed to log in for username \'%s\'.  Check username and password." % username)
-            exit(1)
-        else:
-            print("Successfully logged in as user %s." % (loginData['username']))
-            self.loggedIn = True
-            self.username = username
-            self.userHistory = UserHistory(username)
+        fields = POFSession.Parser.scrape( "msgFormHiddenElements", profileForm.content )
 
-        # Give back the requests session object for further interaction.
-        return self.Session
-
-
-    def sendEmail(self, userID, msg):
-        # checks database if you've messaged this user before.
-        # if user ID is in the database, it will alert the user and not send a message.
-        # if user ID is not in the database, it will add the user ID to the database after successfully sending
-        # a message.  Failed sends do not append the database.
-        messageGateway = "http://www.pof.com/sendmessage.aspx"
-        profileURL = "http://www.pof.com/viewprofile.aspx?profile_id=" + userID
-
-        try:
-            response = self.Session.get(profileURL)
-        except requests.exceptions.ConnectionError, e:
-            eprint("Failed to retrieve anti-bot metadata necessary to send the message.  Does the user actually exist?")
-
-        fields = Parser.scrape("msgFormHiddenElements", response.content)
-
-        self.Session.headers.update(
+        self.client.headers.update(
             {
                 'Accept-Encoding': "gzip, deflate",
                 'Referer': profileURL,
                 'Content-Type': "application/x-www-form-urlencoded",
             }
         )
+
         fields.update(
             {
-                "subject": msg,
-                "message": msg,
+                "subject": body,
+                "message": body,
                 "sendmesage": "Send Quick Msg",
             }
         )
+
         try:
-            response = self.Session.post(messageGateway, data=fields)
-        except requests.exceptions.ConnectionError, e:
-            eprint("Connection failure while attempting to send message.  Session dropped?")
+            submit_response = self.client.post(messageGateway, data=fields)
+        except requests.exceptions.ConnectionError:
+            raise POFSession.POFSessionError("Connection failure while attempting to send message.  Session dropped?")
 
-        if Parser.sndMsgFailed(response.url):
-            eprint("Failed to send a message to user " + userID)
+        if POFSession.Parser.sndMsgFailed(submit_response.url):
+            print("Failed to send a message to user " + user.uid + ".  Blocked?")
+            if not self.has_active_session():
+                raise POFSession.POFSessionError("Your session has been dropped.")
         else:
-            print("Successfully sent message to user " + userID)
+            print("Successfully sent message to user " + user.uid)
 
-        self.userHistory.addUserContactEvent(userID, msg)
+    def searchUsers(self, searchCriteria, num_users, online_only=False):
+        searchURL = "https://www.pof.com/advancedsearch.aspx"
 
-    def getOnlineUsers(self, count, includePreviousContacts):
-        print("Getting online users based on search criteria...")
-        # Returns n users online that the user has not contacted before or disables the check based on the {previouslyContactedOK} bool
-        users = []
-        searchURL = furl("http://www.pof.com/advancedsearch.aspx").add(self.Criteria)
+        if not self.has_active_session():
+            raise POFSession.POFSessionError("Your session has been dropped.  Cannot continue.")
+
+        total_users = list()
+
         page = 0
-
-        if not self.loggedIn:
-            eprint("You must be logged in to view your inbox, derp.")
-            exit(1)
-
-        while (len(users) < count):
+        while len(total_users) < num_users:
             page += 1
+
+            filtered_users = list()
+
+            options = "?iama=" + searchCriteria.gender + \
+                      "&minage=" + searchCriteria.min_age + \
+                      "&maxage=" + searchCriteria.max_age + \
+                      "&state=" + "" + \
+                      "&city=" + searchCriteria.zipcode + \
+                      "&interests=" + searchCriteria.interests + \
+                      "&seekinga=" + searchCriteria.target_gender + \
+                      "&country=" + searchCriteria.country + \
+                      "&height=" + searchCriteria.min_height + \
+                      "&heightb=" + searchCriteria.max_height + \
+                      "&maritalstatus=" + searchCriteria.maritalstatus + \
+                      "&relationshipage_id=" + searchCriteria.relationshipage_id + \
+                      "&wantchildren=" + searchCriteria.wants_children + \
+                      "&smoke=" + searchCriteria.smokes + \
+                      "&drugs=" + searchCriteria.drugs + \
+                      "&body=" + searchCriteria.body_type + \
+                      "&smarts=" + searchCriteria.smarts + \
+                      "&pets=" + searchCriteria.has_pets + \
+                      "&eyes_id=" + searchCriteria.eye_color + \
+                      "&income=" + searchCriteria.income + \
+                      "&profession_id=" + searchCriteria.profession + \
+                      "&haircolor=" + searchCriteria.hair_color + \
+                      "&drink=" + searchCriteria.drinks + \
+                      "&religion=" + searchCriteria.religion + \
+                      "&haschildren=" + searchCriteria.has_children + \
+                      "&miles=" + searchCriteria.max_distance + \
+                      "&page=" + str(page) + \
+                      "&count=1000"
+
+            completeURL = searchURL + options
+
             try:
-                searchURL.args['page'] = '%d' % page
-                #print("Scraping url: %s" % searchURL)
-                response = self.Session.get(searchURL.url)
-            except requests.exceptions.ConnectionError, e:
-                eprint("Could not get to search url: %s"%(searchURL))
-                exit(1)
+                results_page = self.client.get( completeURL )
 
-            thisPageUsers = Parser.scrape("onlineUsers", response.content)
-            if (len(thisPageUsers) == 0):
-                break
+            except requests.exceptions.ConnectionError:
+                raise POFSession.POFSessionError("Could not get results.  Connectivity issue?")
 
-            thisPageResults = list()
-            for userID in thisPageUsers:
-                if includePreviousContacts:
-                    # add the user anyway, no check necessary
-                    thisPageResults.append(userID)
-                else:
-                    # includePreviousContacts is false
-                    # so check if the user's been contacted previously as indicated in the db
-                    # if the user's not been contacted before...add to user list
-                    if not self.userHistory.isPreviouslyContactedUser(userID):
-                        eprint("UserID %s has been previously contacted.  Skipping." % userID)
-                        thisPageResults.append(userID)
+            this_page_users = POFSession.Parser.scrape( "users", results_page.content )
 
-            users.extend(thisPageResults)
-            users = list(set(users))
+            # we're only adding online users to the filtered users pool if the function is given that directive
+            if online_only:
+                for user in this_page_users:
+                    if user.online:
+                        filtered_users.append(user)
 
-        return users[:count]
+                # if we're no longer getting any users after applying the filter it means we're dry
+                if len(filtered_users) == 0:
+                    return set(total_users)
 
+                total_users.extend( filtered_users )
+                print( "Retrieved Page {0} ({1} users)".format( page, len(filtered_users) ) )
 
-    def __init__(self):
-        self.Session = requests.Session()
-        self.loggedIn = False
-        self.username = None
+            # otherwise we extend by the raw return without filtering
+            else:
+                total_users.extend( this_page_users )
+                print( "Retrieved Page {0} ({1} users)".format( page, len(this_page_users) ) )
 
-        self.Criteria = {
-            # Your gender
-            'iama': 'f',
-            # Minimum Age
-            'minage': '18',
-            # Maximum Age
-            'maxage': '45',
-            # Zip Code
-            'city': '75201',
-            # Desired Gender
-            'seekinga': 'f',
-            # Search Radius from Zip Code
-            'miles': '25',
-            # Not implemented
-            'interests': '',
-            'country': '1',
-            'height': '',
-            'heightb': '',
-            'maritalstatus': '',
-            'relationshipage_id': '',
-            'wantchildren': '',
-            'smoke': '',
-            'drugs': '',
-            'body': '',
-            'smarts': '',
-            'pets': '',
-            'eyes_id': '',
-            'income': '',
-            'profession_id': '',
-            'haircolor': '',
-            'drink': '',
-            'religion': '',
-            'haschildren': '',
+        total_users = list(set(total_users))
+
+        return total_users[0:num_users]
+
+    def broadcastMessage(self, users, body):
+        for user in users:
+            if self.contactTracker.isPreviouslyContactedUser(user):
+                print("User {0} has already been contacted and previously contacted members are currently forbidden.".format(user.uid))
+                continue
+            self.sendMessage(user, body)
+
+    def has_active_session(self):
+        # checks if session is active, somehow
+        sessionCheckURL = {
+            "editPage": "https://www.pof.com/editprofile.aspx",
         }
+
+        check_response = self.client.get( sessionCheckURL["editPage"] )
+
+        return POFSession.Parser.scrape( "active_session", check_response.content )
+
+    def getPhotos(self, user):
+        profileURL = "https://www.pof.com/viewprofile.aspx?profile_id=" + user.uid
+
+        try:
+            profile = self.client.get(profileURL)
+        except requests.exceptions.ConnectionError:
+            raise POFSession.POFSessionError("Could not retrieve user profile.  Something's really wrong.")
+
+        photos = POFSession.Parser.scrape("profile_photos", profile.content)
+
+        return photos
+
+
+    class User():
+        def __init__(self, profile_url):
+            self.profile_url = profile_url
+            self.uid = POFSession.Parser.scrape("uid_from_url", self.profile_url)
+            self.online = False
+
+        def set_online(self):
+            self.online = True
+
+        def __repr__(self):
+            return "{0} ({1})".format(self.uid, self.online)
+
+
+    class Config():
+        def __init__(self, config_file):
+            settings = configparser.ConfigParser(allow_no_value=True)
+            settings.read(config_file)
+
+            self.username = settings.get("session", "username")
+            self.password = settings.get("session", "password")
+
+            self.gender = settings.get("search", "gender")
+            self.min_age = settings.get("search", "min_age")
+            self.max_age = settings.get("search", "max_age")
+            self.zipcode = settings.get("search", "zipcode")
+            self.interests = settings.get("search", "interests")
+            self.target_gender= settings.get("search", "target_gender")
+            self.country = settings.get("search", "country")
+            self.min_height = settings.get("search", "min_height")
+            self.max_height = settings.get("search", "max_height")
+            self.maritalstatus = settings.get("search", "marital_status")
+            self.relationshipage_id = settings.get("search", "relationshipage_id")
+            self.wants_children = settings.get("search", "wants_children")
+            self.smokes = settings.get("search", "smokes")
+            self.drugs = settings.get("search", "does_drugs")
+            self.body_type = settings.get("search", "body_type")
+            self.smarts = settings.get("search", "smarts")
+            self.has_pets = settings.get("search", "has_pets")
+            self.eye_color = settings.get("search", "eye_color")
+            self.income = settings.get("search", "income")
+            self.profession = settings.get("search", "profession")
+            self.hair_color = settings.get("search", "hair_color")
+            self.drinks = settings.get("search", "drinks")
+            self.religion = settings.get("search", "religion")
+            self.has_children = settings.get("search", "has_children")
+            self.max_distance = settings.get("search", "max_distance")
+
+    class ContactRecorder():
+        class DatabaseIOError(Exception):
+            def __init__(self, value):
+                self.value = value
+
+        def __init__(self, config):
+            self.conn = sqlite3.connect("{0}.db".format(config.username))
+            if self.conn is not None:
+                self.DB = self.conn.cursor()
+            else:
+                raise self.DatabaseIOError("Could not establish a connection with the database.")
+
+        def ensureMessageHistoryTable(self):
+            query = "CREATE TABLE IF NOT EXISTS {tableName} ( targetUserID integer, time DATETIME );".format(tableName="contacts")
+            self.DB.execute(query)
+
+        def addUserContactEvent(self, user):
+            # adds a contact event to the database
+            # uses currentTime
+
+            query = "INSERT INTO {tableName} VALUES( {user}, DATETIME('now', 'localtime') );".format(
+                tableName="contacts",
+                user=user.uid
+            )
+
+            if not self.isPreviouslyContactedUser(user):
+                self.DB.execute(query)
+                self.conn.commit()
+                print("Added uid {0} to db.".format(user.uid))
+
+        def isPreviouslyContactedUser(self, user):
+            # checks to see if a specific user has been previously contacted
+            # critical that this works to avoid spamming people
+            exists = False
+            query = "SELECT EXISTS( SELECT 1 FROM {tableName} WHERE targetUserID={uid} LIMIT 1);".format(
+                    tableName="contacts",
+                    uid=user.uid
+                )
+            r = self.DB.execute(query)
+            result = r.fetchone()[0]
+
+            if int(result) == 1:
+                exists = True
+
+            return existsdann   d
