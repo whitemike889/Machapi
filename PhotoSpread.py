@@ -50,7 +50,7 @@ def open_gallery( filename ):
 
 def Main():
     output_path = "lol.html"
-    config_file = "/home/phanes/PycharmProjects/bettertittyscraper/config.ini"
+    config_file = "config.ini"
 
     config = POFSession.Config( config_file )
 

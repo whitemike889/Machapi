@@ -493,4 +493,4 @@ class POFSession:
             if int(result) == 1:
                 exists = True
 
-            return existsdann   d
+            return exists

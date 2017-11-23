@@ -2,7 +2,7 @@ from pofapi.POFSession import POFSession
 
 # not POFSession Library
 def Main():
-    config = POFSession.Config("/home/phanes/PycharmProjects/bettertittyscraper/config.ini")
+    config = POFSession.Config("config.ini")
 
     testSession = POFSession(config)
     testSession.login(config.username, config.password)
