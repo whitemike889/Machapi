@@ -32,7 +32,7 @@ pip3 install -r requirements.txt
 After placing the ./Machapi directory in your project, import the Session object from the corresponding engine module:
 
 ```
-from Machapi.Engines.POFcom import Session as POFSession
+from Machapi.Engines.POF_com import Session as POFSession
 
 # Create a configuration object from a file.
 config = POFSession.Config( config_file_path )
