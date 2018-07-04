@@ -95,4 +95,4 @@ If you are the owner of a site a module connects to and wish to request changes,
 This also applies to users desiring additional features, feature changes, etc.
 
 There are exceptions to this, such as requests to purchase the rites to Machapi.  Those can be delivered to my personal
-email address, punches.chris (at) gmail.com
+email address, punches (dot) chris (at) gmail (dot) com
