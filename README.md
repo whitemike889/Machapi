@@ -1,6 +1,15 @@
-# Pofapi
-## A fully functional python API library for POF.com
+# Machapi
+## A library engine for connecting to various social networking sites.
 
+Machapi works by the insertion of modules into an engine designed to run them.
+
+Once an engine module is created and inserted, Machapi is able to connect to that site and perform various functions.
+
+# Currently supported modules:
+plentyoffish.com
+
+
+# Why This Exists
 This was created after I came across a thread from the POF.com owners saying they won't be creating a 
 server-side API, which hinders 3rd party software development.
 
@@ -14,16 +23,16 @@ something, and safely manages its own state for any features that are stateful.
 ## Installation
 
 ```
-git clone https://github.com/cmpunches/Pofapi.git
-cd Pofapi/
+git clone https://github.com/cmpunches/Machapi.git
+cd Machapi/
 pip3 install -r requirements.txt
 ```
 
 ## Usage
-After placing the ./pofapi directory in your project, import the POFSession object: 
+After placing the ./Machapi directory in your project, import the Session object from the corresponding engine module:
 
 ```
-from pofapi.POFSession import POFSession
+from Machapi.Engines.POFcom import Session as POFSession
 
 # Create a configuration object from a file.
 config = POFSession.Config( config_file_path )
@@ -34,7 +43,8 @@ POFobject = POFSession( config )
 POFobject.login( config.username, config.password )
 ```
 
-And you're ready to go.
+And you're ready to go.  You'll want to, of course, adapt the config.ini file to your needs and adjust paths where
+necessary until this engine is a little more polished.
 
 ## Contributing
 
@@ -72,9 +82,9 @@ Released under Apache license with all rights reserved.  See the license file fo
 You may create derivative works provided that your work references the original author and project.
 
 # POF Legal
-The site POF.com is the property of its respective provider or its licensor and is protected by applicable 
+POF.com is the property of its respective provider or its licensor and is protected by applicable
 copyright law, and their terms of service are located [here](http://www.pof.com/terms.aspx), which you must agree to when using this library.
 
-I make no claims of ownership of their content or services.  This is only an interaction API for use on their 
-site.
+I make no claims of ownership of their content or services.  This is only an interaction engine for use on their
+site that will eventually be expanded to several other sites.
 

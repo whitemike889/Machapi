@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+import sys
+sys.path.insert( 0, '..' )
 
-from pofapi.POFSession import POFSession
+from Engines.POF_com import Session as POFSession
 from yattag import Doc, indent
 from lxml import html
 import os
@@ -54,7 +56,7 @@ def Main():
     output_path = "lol.html"
     config_file = "config.ini"
 
-    config = POFSession.Config( config_file )
+    config = POFSession.Config(config_file)
 
     testSession = POFSession(config)
     testSession.login(config.username, config.password)

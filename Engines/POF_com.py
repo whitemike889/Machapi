@@ -4,7 +4,7 @@ import re
 import configparser
 import sqlite3
 
-class POFSession:
+class Session:
     # Exception type for various session errors.
     class POFSessionError(Exception):
         def __init__(self, value):
@@ -15,16 +15,16 @@ class POFSession:
         @staticmethod
         def scrape( datapoint, text ):
             cases = {
-                "sid": POFSession.Parser.SID_login,
-                "active_session": POFSession.Parser.is_logged_in,
-                "csrf_token": POFSession.Parser.csrf_token_login,
-                "installId": POFSession.Parser.installId_login,
-                "deviceId": POFSession.Parser.deviceId_login,
-                "deviceLocale": POFSession.Parser.deviceLocale_login,
-                "msgFormHiddenElements": POFSession.Parser.msgFormHiddenElements,
-                "profile_photos": POFSession.Parser.profile_photos,
-                "users": POFSession.Parser.search_users,
-                "uid_from_url": POFSession.Parser.uid_from_url,
+                "sid": Session.Parser.SID_login,
+                "active_session": Session.Parser.is_logged_in,
+                "csrf_token": Session.Parser.csrf_token_login,
+                "installId": Session.Parser.installId_login,
+                "deviceId": Session.Parser.deviceId_login,
+                "deviceLocale": Session.Parser.deviceLocale_login,
+                "msgFormHiddenElements": Session.Parser.msgFormHiddenElements,
+                "profile_photos": Session.Parser.profile_photos,
+                "users": Session.Parser.search_users,
+                "uid_from_url": Session.Parser.uid_from_url,
             }
             return cases[datapoint](text)
 
@@ -36,10 +36,10 @@ class POFSession:
             if len(sid_xpath) > 0:
                 sid = sid_xpath[0].value
             else:
-                raise POFSession.POFSessionError("Failed to get session ID from login form.")
+                raise Session.POFSessionError("Failed to get session ID from login form.")
 
             if sid is None:
-                raise POFSession.POFSessionError("Failed to get session ID from login form.")
+                raise Session.POFSessionError("Failed to get session ID from login form.")
 
             return sid
 
@@ -51,10 +51,10 @@ class POFSession:
             if len(csrf_token_xpath) > 0:
                 csrf_token = csrf_token_xpath[0].value
             else:
-                raise POFSession.POFSessionError("Failed to get session CSRF TOKEN from login form.")
+                raise Session.POFSessionError("Failed to get session CSRF TOKEN from login form.")
 
             if csrf_token is None:
-                raise POFSession.POFSessionError("Failed to get CSRF TOKEN from login form.")
+                raise Session.POFSessionError("Failed to get CSRF TOKEN from login form.")
 
             return csrf_token
 
@@ -66,10 +66,10 @@ class POFSession:
             if len(installId_xpath) > 0:
                 installId = installId_xpath[0].value
             else:
-                raise POFSession.POFSessionError("Failed to get installId from login form.")
+                raise Session.POFSessionError("Failed to get installId from login form.")
 
             if installId is None:
-                raise POFSession.POFSessionError("Failed to get installId from login form.")
+                raise Session.POFSessionError("Failed to get installId from login form.")
 
             return installId
 
@@ -81,10 +81,10 @@ class POFSession:
             if len(deviceId) > 0:
                 deviceId = deviceId[0].value
             else:
-                raise POFSession.POFSessionError("Failed to get deviceId from login form.")
+                raise Session.POFSessionError("Failed to get deviceId from login form.")
 
             if deviceId is None:
-                raise POFSession.POFSessionError("Failed to get deviceId from login form.")
+                raise Session.POFSessionError("Failed to get deviceId from login form.")
 
             return deviceId
 
@@ -96,10 +96,10 @@ class POFSession:
             if len(deviceLocale) > 0:
                 deviceLocale = deviceLocale[0].value
             else:
-                raise POFSession.POFSessionError("Failed to get deviceLocale from login form.")
+                raise Session.POFSessionError("Failed to get deviceLocale from login form.")
 
             if deviceLocale is None:
-                raise POFSession.POFSessionError("Failed to get deviceLocale from login form.")
+                raise Session.POFSessionError("Failed to get deviceLocale from login form.")
 
             return deviceLocale
 
@@ -168,14 +168,14 @@ class POFSession:
                 if len(href) is not 0:
                     href = href[0]
                 else:
-                    raise POFSession.POFSessionError("Failed to parse the results page. Cannot continue.")
+                    raise Session.POFSessionError("Failed to parse the results page. Cannot continue.")
 
                 online_status_string = profile.xpath('div[@class="description"]/div[@class="about"]/font/text()')
 
                 if len(online_status_string) is not 0:
                     online_status_string = online_status_string[0]
 
-                thisUser = POFSession.User("https://www.pof.com/" + href)
+                thisUser = Session.User("https://www.pof.com/" + href)
 
                 if online_status_string == "Online Now":
                     thisUser.set_online()
@@ -198,16 +198,17 @@ class POFSession:
         self.client = requests.Session()
 
 
-        # spoof a generic browser
+        # But wait-- there's more!
+        # Use the user-configured useragent string
         self.client.headers.update(
             {
                 'Accept-Encoding': "gzip, deflate, br",
                 'Referer': "http://www.pof.com/",
                 'Content-Type': "application/x-www-form-urlencoded",
-                'User-Agent': "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"
+                'User-Agent': self.config.useragent
             }
         )
-        self.contactTracker = POFSession.ContactRecorder(self.config)
+        self.contactTracker = Session.ContactRecorder(self.config)
         self.contactTracker.ensureMessageHistoryTable()
 
     # Log in to POF.com as if you were a browser
@@ -222,14 +223,14 @@ class POFSession:
             page_response = self.client.get(loginURLS["formPage"])
 
         except requests.exceptions.ConnectionError:
-            raise POFSession.POFSessionError("Could not reach %s" % (loginURLS["formPage"]))
+            raise Session.POFSessionError("Could not reach %s" % (loginURLS["formPage"]))
 
         # get form values
-        sid = POFSession.Parser.scrape("sid", page_response.content )
-        csrf_token = POFSession.Parser.scrape( "csrf_token", page_response.content )
-        installId = POFSession.Parser.scrape( "installId", page_response.content )
-        deviceId = POFSession.Parser.scrape( "deviceId", page_response.content )
-        deviceLocale = POFSession.Parser.scrape( "deviceLocale", page_response.content )
+        sid = Session.Parser.scrape("sid", page_response.content)
+        csrf_token = Session.Parser.scrape("csrf_token", page_response.content)
+        installId = Session.Parser.scrape("installId", page_response.content)
+        deviceId = Session.Parser.scrape("deviceId", page_response.content)
+        deviceLocale = Session.Parser.scrape("deviceLocale", page_response.content)
 
         # This site actually checks for these unset variables :/
         loginData = {
@@ -248,12 +249,12 @@ class POFSession:
         try:
             login = self.client.post(loginURLS["processPage"], data=loginData, allow_redirects=True)
         except requests.exceptions.ConnectionError:
-            raise POFSession.POFSessionError("Failed to complete login transaction at the HTTP level.  Can not continue.")
+            raise Session.POFSessionError("Failed to complete login transaction at the HTTP level.  Can not continue.")
 
 
         # throw exception if no active session created
         if not self.has_active_session():
-            raise POFSession.POFSessionError("Login failed.  Please check your password.")
+            raise Session.POFSessionError("Login failed.  Please check your password.")
 
         print("Successfully logged in as user '{0}'.".format(username))
 
@@ -265,9 +266,9 @@ class POFSession:
         try:
             profileForm = self.client.get(profileURL)
         except requests.exceptions.ConnectionError:
-            raise POFSession.POFSessionError("Could not retrieve user profile.  Something's really wrong.")
+            raise Session.POFSessionError("Could not retrieve user profile.  Something's really wrong.")
 
-        fields = POFSession.Parser.scrape( "msgFormHiddenElements", profileForm.content )
+        fields = Session.Parser.scrape("msgFormHiddenElements", profileForm.content)
 
         self.client.headers.update(
             {
@@ -288,12 +289,12 @@ class POFSession:
         try:
             submit_response = self.client.post(messageGateway, data=fields)
         except requests.exceptions.ConnectionError:
-            raise POFSession.POFSessionError("Connection failure while attempting to send message.  Session dropped?")
+            raise Session.POFSessionError("Connection failure while attempting to send message.  Session dropped?")
 
-        if POFSession.Parser.sndMsgFailed(submit_response.url):
+        if Session.Parser.sndMsgFailed(submit_response.url):
             print("Failed to send a message to user " + user.uid + ".  Blocked?")
             if not self.has_active_session():
-                raise POFSession.POFSessionError("Your session has been dropped.")
+                raise Session.POFSessionError("Your session has been dropped.")
         else:
             print("Successfully sent message to user " + user.uid)
 
@@ -301,7 +302,7 @@ class POFSession:
         searchURL = "https://www.pof.com/advancedsearch.aspx"
 
         if not self.has_active_session():
-            raise POFSession.POFSessionError("Your session has been dropped.  Cannot continue.")
+            raise Session.POFSessionError("Your session has been dropped.  Cannot continue.")
 
         total_users = list()
 
@@ -346,9 +347,9 @@ class POFSession:
                 results_page = self.client.get( completeURL )
 
             except requests.exceptions.ConnectionError:
-                raise POFSession.POFSessionError("Could not get results.  Connectivity issue?")
+                raise Session.POFSessionError("Could not get results.  Connectivity issue?")
 
-            this_page_users = POFSession.Parser.scrape( "users", results_page.content )
+            this_page_users = Session.Parser.scrape("users", results_page.content)
 
             # we're only adding online users to the filtered users pool if the function is given that directive
             if online_only:
@@ -387,7 +388,7 @@ class POFSession:
 
         check_response = self.client.get( sessionCheckURL["editPage"] )
 
-        return POFSession.Parser.scrape( "active_session", check_response.content )
+        return Session.Parser.scrape("active_session", check_response.content)
 
     def getPhotos(self, user):
         profileURL = "https://www.pof.com/viewprofile.aspx?profile_id=" + user.uid
@@ -395,9 +396,9 @@ class POFSession:
         try:
             profile = self.client.get(profileURL)
         except requests.exceptions.ConnectionError:
-            raise POFSession.POFSessionError("Could not retrieve user profile.  Something's really wrong.")
+            raise Session.POFSessionError("Could not retrieve user profile.  Something's really wrong.")
 
-        photos = POFSession.Parser.scrape("profile_photos", profile.content)
+        photos = Session.Parser.scrape("profile_photos", profile.content)
 
         return photos
 
@@ -405,7 +406,7 @@ class POFSession:
     class User():
         def __init__(self, profile_url):
             self.profile_url = profile_url
-            self.uid = POFSession.Parser.scrape("uid_from_url", self.profile_url)
+            self.uid = Session.Parser.scrape("uid_from_url", self.profile_url)
             self.online = False
 
         def set_online(self):
@@ -420,34 +421,36 @@ class POFSession:
             settings = configparser.ConfigParser(allow_no_value=True)
             settings.read(config_file)
 
-            self.username = settings.get("session", "username")
-            self.password = settings.get("session", "password")
+            self.useragent = settings.get("general-client", "user_agent")
 
-            self.gender = settings.get("search", "gender")
-            self.min_age = settings.get("search", "min_age")
-            self.max_age = settings.get("search", "max_age")
-            self.zipcode = settings.get("search", "zipcode")
-            self.interests = settings.get("search", "interests")
-            self.target_gender= settings.get("search", "target_gender")
-            self.country = settings.get("search", "country")
-            self.min_height = settings.get("search", "min_height")
-            self.max_height = settings.get("search", "max_height")
-            self.maritalstatus = settings.get("search", "marital_status")
-            self.relationshipage_id = settings.get("search", "relationshipage_id")
-            self.wants_children = settings.get("search", "wants_children")
-            self.smokes = settings.get("search", "smokes")
-            self.drugs = settings.get("search", "does_drugs")
-            self.body_type = settings.get("search", "body_type")
-            self.smarts = settings.get("search", "smarts")
-            self.has_pets = settings.get("search", "has_pets")
-            self.eye_color = settings.get("search", "eye_color")
-            self.income = settings.get("search", "income")
-            self.profession = settings.get("search", "profession")
-            self.hair_color = settings.get("search", "hair_color")
-            self.drinks = settings.get("search", "drinks")
-            self.religion = settings.get("search", "religion")
-            self.has_children = settings.get("search", "has_children")
-            self.max_distance = settings.get("search", "max_distance")
+            self.username = settings.get("Engines-session", "username")
+            self.password = settings.get("Engines-session", "password")
+
+            self.gender = settings.get("Engines-search", "gender")
+            self.min_age = settings.get("Engines-search", "min_age")
+            self.max_age = settings.get("Engines-search", "max_age")
+            self.zipcode = settings.get("Engines-search", "zipcode")
+            self.interests = settings.get("Engines-search", "interests")
+            self.target_gender= settings.get("Engines-search", "target_gender")
+            self.country = settings.get("Engines-search", "country")
+            self.min_height = settings.get("Engines-search", "min_height")
+            self.max_height = settings.get("Engines-search", "max_height")
+            self.maritalstatus = settings.get("Engines-search", "marital_status")
+            self.relationshipage_id = settings.get("Engines-search", "relationshipage_id")
+            self.wants_children = settings.get("Engines-search", "wants_children")
+            self.smokes = settings.get("Engines-search", "smokes")
+            self.drugs = settings.get("Engines-search", "does_drugs")
+            self.body_type = settings.get("Engines-search", "body_type")
+            self.smarts = settings.get("Engines-search", "smarts")
+            self.has_pets = settings.get("Engines-search", "has_pets")
+            self.eye_color = settings.get("Engines-search", "eye_color")
+            self.income = settings.get("Engines-search", "income")
+            self.profession = settings.get("Engines-search", "profession")
+            self.hair_color = settings.get("Engines-search", "hair_color")
+            self.drinks = settings.get("Engines-search", "drinks")
+            self.religion = settings.get("Engines-search", "religion")
+            self.has_children = settings.get("Engines-search", "has_children")
+            self.max_distance = settings.get("Engines-search", "max_distance")
 
     class ContactRecorder():
         class DatabaseIOError(Exception):

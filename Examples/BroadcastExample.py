@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
-from pofapi.POFSession import POFSession
+import sys
+sys.path.insert( 0, '..' )
+
+from Engines.POF_com import Session as POFSession
 
 # not POFSession Library
 def Main():
