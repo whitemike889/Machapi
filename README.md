@@ -91,5 +91,4 @@ agreements as I am not provisioned with power of attorney for the entities that 
 connect to.  By using this library it is assumed in good faith that you will not use those modules to violate their
 terms of service.
 
-I make no claims of ownership of their content or services.  This is only an interaction engine for use on their
-respective sites.
+I make no claims of ownership of their content or services.  This is only an interaction engine.
