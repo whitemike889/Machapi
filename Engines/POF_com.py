@@ -208,6 +208,13 @@ class Session:
                 'User-Agent': self.config.useragent
             }
         )
+
+        # But wait -- there's more!
+        # Throwing in rudimentary proxy support:
+        if self.config.proxy_enabled:
+            proxies = { 'http', self.config.proxy }
+            self.client.proxies.update(proxies)
+
         self.contactTracker = Session.ContactRecorder(self.config)
         self.contactTracker.ensureMessageHistoryTable()
 
@@ -451,6 +458,11 @@ class Session:
             self.drinks = settings.get("pof-search", "drinks")
             self.has_children = settings.get("pof-search", "has_children")
             self.max_distance = settings.get("pof-search", "max_distance")
+
+            self.proxy_enabled = settings.getboolean("proxy", "enabled")
+
+            if self.proxy_enabled:
+                self.proxy = settings.get("proxy", "proxy")
 
     class ContactRecorder():
         class DatabaseIOError(Exception):
