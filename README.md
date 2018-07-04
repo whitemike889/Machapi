@@ -81,10 +81,8 @@ Released under Apache license with all rights reserved.  See the license file fo
 
 You may create derivative works provided that your work references the original author and project.
 
-# POF Legal
-POF.com is the property of its respective provider or its licensor and is protected by applicable
-copyright law, and their terms of service are located [here](http://www.pof.com/terms.aspx), which you must agree to when using this library.
+# Module Legal
+Any modules that this engine runes is the property of its respective provider or its licensor and is protected by applicable
+copyright law, and their terms of service are applicable, which you must agree to when using this library.
 
-I make no claims of ownership of their content or services.  This is only an interaction engine for use on their
-site that will eventually be expanded to several other sites.
-
+I make no claims of ownership of their content or services.  This is only an interaction engine for use on their respective sites.
