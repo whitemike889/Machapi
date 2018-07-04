@@ -212,7 +212,7 @@ class Session:
         self.contactTracker.ensureMessageHistoryTable()
 
     # Log in to POF.com as if you were a browser
-    def login(self, username, password):
+    def login(self):
         # Can also get this from the response Set-Cookie header as
         loginURLS = {
             "formPage": "https://www.pof.com/inbox.aspx",
@@ -239,8 +239,8 @@ class Session:
             'deviceId': deviceId,
             'deviceLocale': deviceLocale,
             'url': '',
-            'username': username,
-            'password': password,
+            'username': self.username,
+            'password': self.password,
             'sid': sid,
             # Also empty.
             'login': '',
@@ -423,34 +423,34 @@ class Session:
 
             self.useragent = settings.get("general-client", "user_agent")
 
-            self.username = settings.get("Engines-session", "username")
-            self.password = settings.get("Engines-session", "password")
+            self.username = settings.get("pof-session", "username")
+            self.password = settings.get("pof-session", "password")
 
-            self.gender = settings.get("Engines-search", "gender")
-            self.min_age = settings.get("Engines-search", "min_age")
-            self.max_age = settings.get("Engines-search", "max_age")
-            self.zipcode = settings.get("Engines-search", "zipcode")
-            self.interests = settings.get("Engines-search", "interests")
-            self.target_gender= settings.get("Engines-search", "target_gender")
-            self.country = settings.get("Engines-search", "country")
-            self.min_height = settings.get("Engines-search", "min_height")
-            self.max_height = settings.get("Engines-search", "max_height")
-            self.maritalstatus = settings.get("Engines-search", "marital_status")
-            self.relationshipage_id = settings.get("Engines-search", "relationshipage_id")
-            self.wants_children = settings.get("Engines-search", "wants_children")
-            self.smokes = settings.get("Engines-search", "smokes")
-            self.drugs = settings.get("Engines-search", "does_drugs")
-            self.body_type = settings.get("Engines-search", "body_type")
-            self.smarts = settings.get("Engines-search", "smarts")
-            self.has_pets = settings.get("Engines-search", "has_pets")
-            self.eye_color = settings.get("Engines-search", "eye_color")
-            self.income = settings.get("Engines-search", "income")
-            self.profession = settings.get("Engines-search", "profession")
-            self.hair_color = settings.get("Engines-search", "hair_color")
-            self.drinks = settings.get("Engines-search", "drinks")
-            self.religion = settings.get("Engines-search", "religion")
-            self.has_children = settings.get("Engines-search", "has_children")
-            self.max_distance = settings.get("Engines-search", "max_distance")
+            self.gender = settings.get("pof-search", "gender")
+            self.min_age = settings.get("pof-search", "min_age")
+            self.max_age = settings.get("pof-search", "max_age")
+            self.zipcode = settings.get("pof-search", "zipcode")
+            self.interests = settings.get("pof-search", "interests")
+            self.target_gender= settings.get("pof-search", "target_gender")
+            self.country = settings.get("pof-search", "country")
+            self.min_height = settings.get("pof-search", "min_height")
+            self.max_height = settings.get("pof-search", "max_height")
+            self.maritalstatus = settings.get("pof-search", "marital_status")
+            self.relationshipage_id = settings.get("pof-search", "relationshipage_id")
+            self.wants_children = settings.get("pof-search", "wants_children")
+            self.smokes = settings.get("pof-search", "smokes")
+            self.drugs = settings.get("pof-search", "does_drugs")
+            self.body_type = settings.get("pof-search", "body_type")
+            self.smarts = settings.get("pof-search", "smarts")
+            self.has_pets = settings.get("pof-search", "has_pets")
+            self.eye_color = settings.get("pof-search", "eye_color")
+            self.income = settings.get("pof-search", "income")
+            self.profession = settings.get("pof-search", "profession")
+            self.hair_color = settings.get("pof-search", "hair_color")
+            self.religion = settings.get("pof-search", "religion")
+            self.drinks = settings.get("pof-search", "drinks")
+            self.has_children = settings.get("pof-search", "has_children")
+            self.max_distance = settings.get("pof-search", "max_distance")
 
     class ContactRecorder():
         class DatabaseIOError(Exception):

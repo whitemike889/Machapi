@@ -10,7 +10,7 @@ def Main():
     config = POFSession.Config("config.ini")
 
     testSession = POFSession(config)
-    testSession.login(config.username, config.password)
+    testSession.login()
 
     users = testSession.searchUsers(config, 5, online_only=True)
 
