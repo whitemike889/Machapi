@@ -3,9 +3,9 @@
 import sys
 sys.path.insert( 0, '..' )
 
+# this will later be a session multiplexer object in a module abstraction library
 from Engines.POF_com import Session as POFSession
 
-# not POFSession Library
 def Main():
     config = POFSession.Config("config.ini")
 

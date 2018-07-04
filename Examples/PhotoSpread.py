@@ -2,7 +2,9 @@
 import sys
 sys.path.insert( 0, '..' )
 
+# this will later be a session multiplexer object in a module abstraction library
 from Engines.POF_com import Session as POFSession
+
 from yattag import Doc, indent
 from lxml import html
 import os
