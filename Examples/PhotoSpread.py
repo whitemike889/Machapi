@@ -59,7 +59,7 @@ def Main():
     config = POFSession.Config(config_file)
 
     testSession = POFSession(config)
-    testSession.login(config.username, config.password)
+    testSession.login()
 
     galleryData = list()
     users = testSession.searchUsers(config, 100, online_only=True)
