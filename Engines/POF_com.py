@@ -133,7 +133,7 @@ class Session:
             return hiddenElements
 
         @staticmethod
-        def sndMsgFailed(m):
+        def send_message_failed(m):
             return not re.search("messagesent=1", m)
 
         @staticmethod
@@ -298,7 +298,7 @@ class Session:
         except requests.exceptions.ConnectionError:
             raise Session.POFSessionError("Connection failure while attempting to send message.  Session dropped?")
 
-        if Session.Parser.sndMsgFailed(submit_response.url):
+        if Session.Parser.send_message_failed(submit_response.url):
             print("Failed to send a message to user " + user.uid + ".  Blocked?")
             if not self.has_active_session():
                 raise Session.POFSessionError("Your session has been dropped.")
