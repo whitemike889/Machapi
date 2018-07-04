@@ -87,3 +87,9 @@ terms of service.
 
 I make no claims of ownership of their content or services.  Machapi is purely an interaction engine for session-driven
 websites, and not even specific websites.
+
+# How to Request Changes
+
+If you are the owner of a site a module connects to and wish to request changes, use the issue tracker.
+
+This also applies to users desiring additional features, feature changes, etc.
