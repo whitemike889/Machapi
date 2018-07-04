@@ -82,8 +82,14 @@ Released under Apache license with all rights reserved.  See the license file fo
 You may create derivative works provided that your work references the original author and project.
 
 # Module Legal
-Any modules that this engine runes is the property of its respective provider or its licensor and is protected by
-applicable copyright law, and their terms of service are applicable to users of this libary, so you must agree to them
-when using this library.
+Any sites connect to by a module that this engine runs is the property of its respective provider or its licensor and
+are protected by applicable copyright law, and those sites' terms of service are applicable to users of this library, so
+you must agree to them when using this library.
 
-I make no claims of ownership of their content or services.  This is only an interaction engine for use on their respective sites.
+However, it is not within my power to force users to comply with third party terms of service or end user license
+agreements as I am not provisioned with power of attorney for the entities that own the sites any potential modules
+connect to.  By using this library it is assumed in good faith that you will not use those modules to violate their
+terms of service.
+
+I make no claims of ownership of their content or services.  This is only an interaction engine for use on their
+respective sites.
