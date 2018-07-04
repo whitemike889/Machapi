@@ -67,12 +67,6 @@ This library is being used as an example use case for all of the additional cons
 creation of a python library so that other work will be more polished and consumable, and so that other work
 that I create will have a higher likelihood of inclusion into other projects.
 
-## TODOs
-* Add Proxy Support
-* Package as a python wheel or add a setup.py
-* Add doxygen documentation generation
-* Add unit tests
-
 ## License and Authorship
 
 By Chris Punches and owned by same, starting in 2016.  
